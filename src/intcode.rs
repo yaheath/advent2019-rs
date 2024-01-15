@@ -14,93 +14,174 @@ impl FromStr for ProgMem {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum StepResult {
+    Ok,
+    Halt,
+    InvalidInstr(String),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RunErr {
+    InvalidInstr(String),
+}
+
+enum Opcode {
+    Add = 1,
+    Mul,
+    Inp,
+    Out,
+    Jnz,
+    Jz,
+    Lt,
+    Eq,
+    Hlt = 99,
+}
+impl Opcode {
+    fn size(&self) -> usize {
+        match self {
+            Self::Add => 4,
+            Self::Mul => 4,
+            Self::Inp => 2,
+            Self::Out => 2,
+            Self::Jnz => 3,
+            Self::Jz => 3,
+            Self::Lt => 4,
+            Self::Eq => 4,
+            Self::Hlt => 1,
+        }
+    }
+    fn stores_to(&self, argnum: usize) -> bool {
+        match self {
+            Self::Add if argnum == 2 => true,
+            Self::Mul if argnum == 2 => true,
+            Self::Inp if argnum == 0 => true,
+            Self::Lt if argnum == 2 => true,
+            Self::Eq if argnum == 2 => true,
+            _ => false,
+        }
+    }
+}
+impl TryFrom<i64> for Opcode {
+    type Error = String;
+    fn try_from(v: i64) -> Result<Self, Self::Error> {
+        let op = v % 100;
+        match op {
+            1 => Ok(Self::Add),
+            2 => Ok(Self::Mul),
+            3 => Ok(Self::Inp),
+            4 => Ok(Self::Out),
+            5 => Ok(Self::Jnz),
+            6 => Ok(Self::Jz),
+            7 => Ok(Self::Lt),
+            8 => Ok(Self::Eq),
+            99 => Ok(Self::Hlt),
+            _ => Err(format!("invalid opcode {}", op)),
+        }
+    }
+}
+
 pub struct IntcodeVM {
     pub pc: usize,
     pub mem: Vec<i64>,
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum StepResult {
-    Ok,
-    Halt,
-    InvalidInstr,
-    InvalidPC,
-}
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum RunErr {
-    InvalidInstr,
-    InvalidPC,
-}
-
-enum Operand {
-    Add,
-    Mul,
-}
-impl Operand {
-    fn size(&self) -> usize {
-        match self {
-            Operand::Add => 4,
-            Operand::Mul => 4,
-            //Operand::Halt => 1,
-        }
-    }
-}
-
 impl IntcodeVM {
     pub fn with_mem(mem: &ProgMem) -> Self {
-        Self { pc: 0, mem: mem.0.clone() }
+        Self {
+            pc: 0,
+            mem: mem.0.clone(),
+        }
     }
 
-    pub fn step(&mut self) -> StepResult {
+    pub fn step<FIN, FOUT>(&mut self, input: &mut FIN, output: &mut FOUT) -> StepResult
+        where FIN: FnMut() -> i64, FOUT: FnMut(i64)
+    {
         if self.pc >= self.mem.len() {
-            return StepResult::InvalidInstr;
+            return StepResult::InvalidInstr(format!("pc {} greater than max mem {}", self.pc, self.mem.len()));
         }
-        match self.mem[self.pc] {
-            1 => self.instr(Operand::Add),
-            2 => self.instr(Operand::Mul),
-            99 => StepResult::Halt,
-            _ => StepResult::InvalidInstr,
+        let instr = self.mem[self.pc];
+
+        let op: Result<Opcode, _> = instr.try_into();
+        if let Err(msg) = op {
+            return StepResult::InvalidInstr(msg);
         }
+        let op = op.unwrap();
+        if self.pc + op.size() > self.mem.len() {
+            return StepResult::InvalidInstr("not enough arguments".into());
+        }
+
+        let mut args = self.mem[self.pc + 1 .. self.pc + op.size()].to_owned();
+        for idx in 0..args.len() {
+            let mode = (instr / 10i64.pow(idx as u32 + 2)) % 10;
+            match mode {
+                0 => { // position
+                    if !(0..self.mem.len() as i64).contains(&args[idx]) {
+                        return StepResult::InvalidInstr(
+                            format!("position argument at mem {} (value={}) out of range", idx as usize + self.pc + 1, args[idx])
+                        );
+                    }
+                    if !op.stores_to(idx) {
+                        args[idx] = self.mem[args[idx] as usize];
+                    }
+                },
+                1 => { // immediate
+                    if op.stores_to(idx) {
+                        return StepResult::InvalidInstr("invalid address mode for destination argument".into());
+                    }
+                },
+                _ => { return StepResult::InvalidInstr(format!("invalid address mode {mode}")); }
+            }
+        }
+
+        match op {
+            Opcode::Add => { self.mem[args[2] as usize] = args[0] + args[1]; },
+            Opcode::Mul => { self.mem[args[2] as usize] = args[0] * args[1]; },
+            Opcode::Inp => { self.mem[args[0] as usize] = input() },
+            Opcode::Out => { output(args[0]) },
+            Opcode::Jnz => { if args[0] != 0 { return self.do_jump(args[1]); }},
+            Opcode::Jz =>  { if args[0] == 0 { return self.do_jump(args[1]); }},
+            Opcode::Lt =>  { self.mem[args[2] as usize] = if args[0] < args[1] {1} else {0} },
+            Opcode::Eq =>  { self.mem[args[2] as usize] = if args[0] == args[1] {1} else {0} },
+            Opcode::Hlt => { return StepResult::Halt; },
+        }
+        self.pc += op.size();
+        StepResult::Ok
+    }
+
+    fn do_jump(&mut self, addr: i64) -> StepResult {
+        if !(0..self.mem.len() as i64).contains(&addr) {
+            return StepResult::InvalidInstr(format!("jump destination {addr} out of range"));
+        }
+        self.pc = addr as usize;
+        StepResult::Ok
     }
 
     pub fn run(&mut self) -> Result<(), RunErr> {
+        let mut input = || 0;
+        let mut output = |v| { println!("{v}"); };
         loop {
-            match self.step() {
+            match self.step(&mut input, &mut output) {
                 StepResult::Ok => continue,
                 StepResult::Halt => return Ok(()),
-                StepResult::InvalidInstr => return Err(RunErr::InvalidInstr),
-                StepResult::InvalidPC => return Err(RunErr::InvalidPC),
+                StepResult::InvalidInstr(err) => return Err(RunErr::InvalidInstr(err)),
             }
         }
     }
 
-    fn instr(&mut self, op: Operand) -> StepResult {
-        if self.pc + op.size() >= self.mem.len() {
-            return StepResult::InvalidPC;
+    pub fn run_with_cb<F1,F2>(&mut self, input: &mut F1, output: &mut F2) -> Result<(), RunErr>
+        where F1: FnMut() -> i64, F2: FnMut(i64)
+    {
+        loop {
+            match self.step(input, output) {
+                StepResult::Ok => continue,
+                StepResult::Halt => return Ok(()),
+                StepResult::InvalidInstr(err) => return Err(RunErr::InvalidInstr(err)),
+            }
         }
-        let args = self.mem[self.pc + 1 .. self.pc + op.size()].to_owned();
-        let addr0 = if op.size() >= 2 && (0..self.mem.len() as i64).contains(&args[0]) {
-            Some(args[0] as usize)
-        } else { None };
-        let addr1 = if op.size() >= 3 && (0..self.mem.len() as i64).contains(&args[1]) {
-            Some(args[1] as usize)
-        } else { None };
-        let addr2 = if op.size() >= 4 && (0..self.mem.len() as i64).contains(&args[2]) {
-            Some(args[2] as usize)
-        } else { None };
+    }
 
-        match op {
-            Operand::Add if addr0.is_some() && addr1.is_some() && addr2.is_some() => {
-                self.mem[addr2.unwrap()] = self.mem[addr0.unwrap()] + self.mem[addr1.unwrap()];
-            },
-            Operand::Mul if addr2.is_some() => {
-                self.mem[addr2.unwrap()] = self.mem[addr0.unwrap()] * self.mem[addr1.unwrap()];
-            },
-            _ => { return StepResult::InvalidInstr; },
-        }
-        self.pc += op.size();
-        StepResult::Ok
+    pub fn reset(&mut self) {
+        self.pc = 0;
     }
 }
