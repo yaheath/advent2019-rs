@@ -9,5 +9,5 @@ edition = "2021"
 [dependencies]
 regex = "1"
 lazy_static = "1"
-ya_advent_lib = "1.4.0"
+ya_advent_lib = { path = "../advent_lib" }
 itertools = "0.10.5"

@@ -25,6 +25,13 @@ pub enum StepResult {
     Ok,
     Halt,
     InvalidInstr,
+    InvalidPC,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum RunErr {
+    InvalidInstr,
+    InvalidPC,
 }
 
 enum Operand {
@@ -58,18 +65,20 @@ impl IntcodeVM {
         }
     }
 
-    pub fn run(&mut self) -> StepResult {
+    pub fn run(&mut self) -> Result<(), RunErr> {
         loop {
             match self.step() {
-                StepResult::Ok => {continue;},
-                r => {return r;},
+                StepResult::Ok => continue,
+                StepResult::Halt => return Ok(()),
+                StepResult::InvalidInstr => return Err(RunErr::InvalidInstr),
+                StepResult::InvalidPC => return Err(RunErr::InvalidPC),
             }
         }
     }
 
     fn instr(&mut self, op: Operand) -> StepResult {
         if self.pc + op.size() >= self.mem.len() {
-            return StepResult::InvalidInstr;
+            return StepResult::InvalidPC;
         }
         let args = self.mem[self.pc + 1 .. self.pc + op.size()].to_owned();
         let addr0 = if op.size() >= 2 && (0..self.mem.len() as i64).contains(&args[0]) {
