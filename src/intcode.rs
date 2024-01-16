@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::str::FromStr;
 use std::vec::Vec;
 
@@ -18,11 +19,13 @@ impl FromStr for ProgMem {
 pub enum StepResult {
     Ok,
     Halt,
+    InputNeeded,
     InvalidInstr(String),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum RunErr {
+    InputNeeded,
     InvalidInstr(String),
 }
 
@@ -84,6 +87,7 @@ impl TryFrom<i64> for Opcode {
 pub struct IntcodeVM {
     pub pc: usize,
     pub mem: Vec<i64>,
+    pub input_queue: VecDeque<i64>,
 }
 
 impl IntcodeVM {
@@ -91,11 +95,12 @@ impl IntcodeVM {
         Self {
             pc: 0,
             mem: mem.0.clone(),
+            input_queue: VecDeque::new(),
         }
     }
 
     pub fn step<FIN, FOUT>(&mut self, input: &mut FIN, output: &mut FOUT) -> StepResult
-        where FIN: FnMut() -> i64, FOUT: FnMut(i64)
+        where FIN: FnMut() -> Option<i64>, FOUT: FnMut(i64)
     {
         if self.pc >= self.mem.len() {
             return StepResult::InvalidInstr(format!("pc {} greater than max mem {}", self.pc, self.mem.len()));
@@ -137,7 +142,15 @@ impl IntcodeVM {
         match op {
             Opcode::Add => { self.mem[args[2] as usize] = args[0] + args[1]; },
             Opcode::Mul => { self.mem[args[2] as usize] = args[0] * args[1]; },
-            Opcode::Inp => { self.mem[args[0] as usize] = input() },
+            Opcode::Inp => {
+                if let Some(val) = self.input_queue.pop_front() {
+                    self.mem[args[0] as usize] = val;
+                }
+                else if let Some(val) = input() {
+                    self.mem[args[0] as usize] = val;
+                }
+                else { return StepResult::InputNeeded; }
+            },
             Opcode::Out => { output(args[0]) },
             Opcode::Jnz => { if args[0] != 0 { return self.do_jump(args[1]); }},
             Opcode::Jz =>  { if args[0] == 0 { return self.do_jump(args[1]); }},
@@ -158,30 +171,28 @@ impl IntcodeVM {
     }
 
     pub fn run(&mut self) -> Result<(), RunErr> {
-        let mut input = || 0;
+        let mut input = || None;
         let mut output = |v| { println!("{v}"); };
         loop {
             match self.step(&mut input, &mut output) {
                 StepResult::Ok => continue,
                 StepResult::Halt => return Ok(()),
+                StepResult::InputNeeded => return Err(RunErr::InputNeeded),
                 StepResult::InvalidInstr(err) => return Err(RunErr::InvalidInstr(err)),
             }
         }
     }
 
     pub fn run_with_cb<F1,F2>(&mut self, input: &mut F1, output: &mut F2) -> Result<(), RunErr>
-        where F1: FnMut() -> i64, F2: FnMut(i64)
+        where F1: FnMut() -> Option<i64>, F2: FnMut(i64)
     {
         loop {
             match self.step(input, output) {
                 StepResult::Ok => continue,
                 StepResult::Halt => return Ok(()),
+                StepResult::InputNeeded => return Err(RunErr::InputNeeded),
                 StepResult::InvalidInstr(err) => return Err(RunErr::InvalidInstr(err)),
             }
         }
-    }
-
-    pub fn reset(&mut self) {
-        self.pc = 0;
     }
 }
