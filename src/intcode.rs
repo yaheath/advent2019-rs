@@ -38,6 +38,7 @@ enum Opcode {
     Jz,
     Lt,
     Eq,
+    Rlb,
     Hlt = 99,
 }
 impl Opcode {
@@ -51,6 +52,7 @@ impl Opcode {
             Self::Jz => 3,
             Self::Lt => 4,
             Self::Eq => 4,
+            Self::Rlb => 2,
             Self::Hlt => 1,
         }
     }
@@ -78,6 +80,7 @@ impl TryFrom<i64> for Opcode {
             6 => Ok(Self::Jz),
             7 => Ok(Self::Lt),
             8 => Ok(Self::Eq),
+            9 => Ok(Self::Rlb),
             99 => Ok(Self::Hlt),
             _ => Err(format!("invalid opcode {}", op)),
         }
@@ -88,6 +91,7 @@ pub struct IntcodeVM {
     pub pc: usize,
     pub mem: Vec<i64>,
     pub input_queue: VecDeque<i64>,
+    pub relbase: i64,
 }
 
 impl IntcodeVM {
@@ -96,6 +100,7 @@ impl IntcodeVM {
             pc: 0,
             mem: mem.0.clone(),
             input_queue: VecDeque::new(),
+            relbase: 0,
         }
     }
 
@@ -113,21 +118,29 @@ impl IntcodeVM {
         }
         let op = op.unwrap();
         if self.pc + op.size() > self.mem.len() {
-            return StepResult::InvalidInstr("not enough arguments".into());
+            self.mem.resize(self.pc + op.size(), 0);
         }
 
         let mut args = self.mem[self.pc + 1 .. self.pc + op.size()].to_owned();
         for idx in 0..args.len() {
             let mode = (instr / 10i64.pow(idx as u32 + 2)) % 10;
             match mode {
-                0 => { // position
-                    if !(0..self.mem.len() as i64).contains(&args[idx]) {
+                0 |    // position
+                2 => { // relative
+                    let addr = args[idx] + if mode == 0 { 0 } else { self.relbase };
+                    if addr < 0 {
                         return StepResult::InvalidInstr(
-                            format!("position argument at mem {} (value={}) out of range", idx as usize + self.pc + 1, args[idx])
+                            format!("negative argument: {}", addr)
                         );
                     }
+                    if addr as usize >= self.mem.len() {
+                        self.mem.resize(addr as usize + 1, 0);
+                    }
                     if !op.stores_to(idx) {
-                        args[idx] = self.mem[args[idx] as usize];
+                        args[idx] = self.mem[addr as usize];
+                    }
+                    else {
+                        args[idx] = addr;
                     }
                 },
                 1 => { // immediate
@@ -156,6 +169,7 @@ impl IntcodeVM {
             Opcode::Jz =>  { if args[0] == 0 { return self.do_jump(args[1]); }},
             Opcode::Lt =>  { self.mem[args[2] as usize] = if args[0] < args[1] {1} else {0} },
             Opcode::Eq =>  { self.mem[args[2] as usize] = if args[0] == args[1] {1} else {0} },
+            Opcode::Rlb => { self.relbase += args[0]; },
             Opcode::Hlt => { return StepResult::Halt; },
         }
         self.pc += op.size();
