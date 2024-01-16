@@ -5,7 +5,7 @@ use advent2019::intcode::{IntcodeVM, ProgMem};
 
 fn part1(input: &ProgMem) -> i64 {
     let mut last_output = 0;
-    let mut vm = IntcodeVM::with_mem(&input);
+    let mut vm = IntcodeVM::with_mem(input);
     let mut output = |v| { last_output = v; };
     vm.run_with_cb(&mut || Some(1), &mut output).unwrap();
     last_output
@@ -13,7 +13,7 @@ fn part1(input: &ProgMem) -> i64 {
 
 fn part2(input: &ProgMem) -> i64 {
     let mut last_output = 0;
-    let mut vm = IntcodeVM::with_mem(&input);
+    let mut vm = IntcodeVM::with_mem(input);
     let mut output = |v| { last_output = v; };
     vm.run_with_cb(&mut || Some(5), &mut output).unwrap();
     last_output

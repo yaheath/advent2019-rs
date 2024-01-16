@@ -5,7 +5,7 @@ extern crate advent2019;
 use advent2019::intcode::{IntcodeVM, ProgMem};
 
 fn part1(input: &ProgMem) -> i64 {
-    let mut vm = IntcodeVM::with_mem(&input);
+    let mut vm = IntcodeVM::with_mem(input);
     vm.mem[1] = 12;
     vm.mem[2] = 2;
     vm.run().unwrap();
@@ -16,7 +16,7 @@ fn part2(input: &ProgMem) -> i64 {
     (0..=99)
         .cartesian_product(0..=99)
         .map(|(n, v)| {
-            let mut vm = IntcodeVM::with_mem(&input);
+            let mut vm = IntcodeVM::with_mem(input);
             vm.mem[1] = n;
             vm.mem[2] = v;
             vm.run().unwrap();

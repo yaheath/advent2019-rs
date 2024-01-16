@@ -1,8 +1,8 @@
 use std::vec::Vec;
-use itertools::Itertools;
+
 use ya_advent_lib::read::read_input;
 extern crate advent2019;
-use advent2019::intcode::{IntcodeVM, ProgMem, RunErr};
+use advent2019::intcode::{IntcodeVM, ProgMem};
 
 fn part1(input: &ProgMem) -> i64 {
     let mut keycode = 0;
@@ -29,7 +29,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ya_advent_lib::read::test_input;
+    
 
     #[test]
     fn day07_test() {

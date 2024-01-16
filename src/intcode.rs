@@ -122,12 +122,12 @@ impl IntcodeVM {
         }
 
         let mut args = self.mem[self.pc + 1 .. self.pc + op.size()].to_owned();
-        for idx in 0..args.len() {
+        for (idx, arg) in args.iter_mut().enumerate() {
             let mode = (instr / 10i64.pow(idx as u32 + 2)) % 10;
             match mode {
                 0 |    // position
                 2 => { // relative
-                    let addr = args[idx] + if mode == 0 { 0 } else { self.relbase };
+                    let addr = *arg + if mode == 0 { 0 } else { self.relbase };
                     if addr < 0 {
                         return StepResult::InvalidInstr(
                             format!("negative argument: {}", addr)
@@ -137,10 +137,10 @@ impl IntcodeVM {
                         self.mem.resize(addr as usize + 1, 0);
                     }
                     if !op.stores_to(idx) {
-                        args[idx] = self.mem[addr as usize];
+                        *arg = self.mem[addr as usize];
                     }
                     else {
-                        args[idx] = addr;
+                        *arg = addr;
                     }
                 },
                 1 => { // immediate

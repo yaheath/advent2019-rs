@@ -7,7 +7,7 @@ use ya_advent_lib::infinite_grid::InfiniteGrid;
 use ya_advent_lib::coords::Coord2D;
 use ya_advent_lib::read::read_input;
 
-#[derive(Copy, Clone, Hash, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 struct Slope {
     x: i64,
     y: i64,
@@ -20,7 +20,7 @@ impl From<Coord2D> for Slope {
 impl Slope {
     fn angle(&self) -> f64 {
         // atan2 is normally y.atan2(x). However, we want 0 to point up, where up is -y,
-        // and increasing angles are clockwise.
+        // increasing angles are clockwise, and output range is [0, 2pi)
         let a = (self.x as f64).atan2(-self.y as f64);
         if a < 0. {
             a + 2. * PI
@@ -32,12 +32,13 @@ impl Slope {
 }
 impl Ord for Slope {
     fn cmp(&self, other: &Self) -> Ordering {
+        // we don't expect to have any NaNs
         self.angle().partial_cmp(&other.angle()).unwrap()
     }
 }
 impl PartialOrd for Slope {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.angle().partial_cmp(&other.angle())
+        Some(self.cmp(other))
     }
 }
 
@@ -54,6 +55,7 @@ fn slope_with_d(c: Coord2D) -> (Slope, i64) {
 }
 
 fn mkset(input: &[String]) -> HashSet<Coord2D> {
+    // just using InfiniteGrid for its parsing.
     let grid = InfiniteGrid::from_input(input, false, |c,_,_| if c == '#' { Some(true) } else { None } );
     grid.iter().map(|((x, y),_)| Coord2D::new(*x, *y)).collect()
 }
@@ -105,12 +107,6 @@ fn bothparts(input: &[String]) -> (usize, i64) {
 
 fn main() {
     let input: Vec<String> = read_input();
-    /*
-    for (x,y) in [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)] {
-        let s = Slope{x, y};
-        println!("{}", s.angle());
-    }
-    */
     let (part1, part2) = bothparts(&input);
     println!("Part 1: {part1}");
     println!("Part 2: {part2}");
@@ -127,5 +123,23 @@ mod tests {
         let (part1, part2) = bothparts(&input);
         assert_eq!(part1, 210);
         assert_eq!(part2, 802);
+    }
+
+    #[test]
+    fn slope_test() {
+        let s: Slope = Coord2D::new(5, 5).into();
+        assert_eq!(s, Slope{x:1,y:1});
+        let s: Slope = Coord2D::new(-5, 0).into();
+        assert_eq!(s, Slope{x:-1,y:0});
+        let s: Slope = Coord2D::new(12, -10).into();
+        assert_eq!(s, Slope{x:6,y:-5});
+        assert_eq!(Slope{x: 0, y: -1}.angle(), 0.);
+        assert_eq!(Slope{x: 1, y: -1}.angle(), PI / 4.);
+        assert_eq!(Slope{x: 1, y: 0}.angle(), PI / 2.);
+        assert_eq!(Slope{x: 1, y: 1}.angle(), PI * 3. / 4.);
+        assert_eq!(Slope{x: 0, y: 1}.angle(), PI);
+        assert_eq!(Slope{x: -1, y: 1}.angle(), PI * 5. / 4.);
+        assert_eq!(Slope{x: -1, y: 0}.angle(), PI * 3. / 2.);
+        assert_eq!(Slope{x: -1, y: -1}.angle(), PI * 7. / 4.);
     }
 }

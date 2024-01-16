@@ -86,7 +86,7 @@ fn part1(input: &[WirePath]) -> i64 {
     let origin = Coord2D::new(0, 0);
     wire_b.iter()
         .cartesian_product(wire_a)
-        .filter_map(|(b, a)| a.p_intersect(&b))
+        .filter_map(|(b, a)| a.p_intersect(b))
         .filter(|c| *c != origin)
         .map(|c| c.mdist_to(&origin))
         .min()
@@ -104,7 +104,7 @@ fn part2(input: &[WirePath]) -> i64 {
             if a_idx == 0 {
                 a_len = 0;
             }
-            let r = a.p_intersect(&b)
+            let r = a.p_intersect(b)
                 .map(|c| a_len + b_len + a.a.mdist_to(&c) + b.a.mdist_to(&c));
             a_len += a.len();
             if a_idx == wire_a.len() - 1 {
