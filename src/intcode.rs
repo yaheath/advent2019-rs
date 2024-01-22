@@ -209,4 +209,32 @@ impl IntcodeVM {
             }
         }
     }
+
+    pub fn run_interactive<F>(&mut self, non_ascii_output: &mut F) -> Result<(), RunErr>
+        where F: FnMut(i64)
+    {
+        let mut output = |c| {
+            if c < 128 {
+                print!("{}", c as u8 as char);
+            }
+            else {
+                non_ascii_output(c);
+            }
+        };
+        loop {
+            match self.step(&mut || None, &mut output) {
+                StepResult::Ok => continue,
+                StepResult::Halt => return Ok(()),
+                StepResult::InputNeeded => {},
+                StepResult::InvalidInstr(err) => return Err(RunErr::InvalidInstr(err)),
+            }
+            let mut buffer = String::new();
+            std::io::stdin().read_line(&mut buffer).unwrap();
+            buffer.chars().for_each(|c| self.input_queue.push_back(c as u8 as i64));
+        }
+    }
+
+    pub fn ascii_input(&mut self, input: &str) {
+        input.chars().for_each(|c| self.input_queue.push_back(c as u8 as i64));
+    }
 }

@@ -172,9 +172,10 @@ mod tests {
     use ya_advent_lib::read::test_input;
 
     #[test]
-    fn dayNN_test() {
-        let input: Vec<String> = test_input(include_str!("dayNN.testinput"));
-        assert_eq!(part1(&input), 0);
-        assert_eq!(part2(&input), 0);
+    fn day20_test() {
+        let input: Vec<String> = test_input(include_str!("day20.testinput1"));
+        assert_eq!(part1(&input), 58);
+        let input: Vec<String> = test_input(include_str!("day20.testinput2"));
+        assert_eq!(part2(&input), 396);
     }
 }
