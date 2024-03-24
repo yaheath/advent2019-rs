@@ -1,18 +1,18 @@
-use std::vec::Vec;
 use itertools::Itertools;
+use std::vec::Vec;
 use ya_advent_lib::range::range_from_str;
 use ya_advent_lib::read::read_input;
 
 fn valid_password(pw: usize) -> bool {
     let pws = format!("{pw:06}");
-    pws.chars().tuple_windows().all(|(a,b)| a <= b)
-        && pws.chars().tuple_windows().any(|(a,b)| a == b)
+    pws.chars().tuple_windows().all(|(a, b)| a <= b)
+        && pws.chars().tuple_windows().any(|(a, b)| a == b)
 }
 
 fn valid_password_p2(pw: usize) -> bool {
     let pws = format!("{pw:06}");
-    pws.chars().tuple_windows().all(|(a,b)| a <= b)
-        && pws.chars().dedup_with_count().any(|(c,_)| c == 2)
+    pws.chars().tuple_windows().all(|(a, b)| a <= b)
+        && pws.chars().dedup_with_count().any(|(c, _)| c == 2)
 }
 
 fn part1(input: &str) -> usize {

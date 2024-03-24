@@ -3,8 +3,8 @@ use std::vec::Vec;
 use ya_advent_lib::read::read_input;
 
 enum Action {
-    Reverse,    // deal into new stack
-    Rotate(i64), // cut
+    Reverse,       // deal into new stack
+    Rotate(i64),   // cut
     Multiply(i64), // deal with increment
 }
 
@@ -15,15 +15,12 @@ impl FromStr for Action {
         if words[0] == "cut" {
             let n = words[1].parse::<i64>().unwrap();
             Ok(Action::Rotate(n))
-        }
-        else if words[1] == "into" {
+        } else if words[1] == "into" {
             Ok(Action::Reverse)
-        }
-        else if words[1] == "with" {
+        } else if words[1] == "with" {
             let n = words[words.len() - 1].parse::<i64>().unwrap();
             Ok(Action::Multiply(n))
-        }
-        else {
+        } else {
             Err(())
         }
     }
@@ -35,15 +32,19 @@ fn part1(input: &[Action]) -> i64 {
         Action::Reverse => ncards - 1 - card,
         Action::Rotate(n) => {
             let mut nextcard = card - n;
-            if nextcard < 0 { nextcard += ncards; }
+            if nextcard < 0 {
+                nextcard += ncards;
+            }
             nextcard % ncards
-        },
-        Action::Multiply(n) => (card * n) % ncards
+        }
+        Action::Multiply(n) => (card * n) % ncards,
     })
 }
 
 fn mod_pow(base: i128, exp: i128, modulus: i128) -> i128 {
-    if modulus == 1 { return 0 }
+    if modulus == 1 {
+        return 0;
+    }
     let mut result = 1;
     let mut base = base % modulus;
     let mut exp = exp;
@@ -68,10 +69,10 @@ fn part2(input: &[Action]) -> i64 {
         Action::Multiply(n) => {
             let n = mod_pow(*n as i128, ncards - 2, ncards);
             (a * n % ncards, b * n % ncards)
-        },
+        }
     });
     let a_pow = mod_pow(a, nshuffles, ncards);
-    let x = b * ((a_pow - 1) * mod_pow(a-1, ncards-2, ncards) % ncards) % ncards;
+    let x = b * ((a_pow - 1) * mod_pow(a - 1, ncards - 2, ncards) % ncards) % ncards;
     ((2020 * a_pow % ncards + x) % ncards) as i64
 }
 

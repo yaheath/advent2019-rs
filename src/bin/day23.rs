@@ -22,29 +22,38 @@ fn run(input: &ProgMem, part2: bool) -> i64 {
         for (idx, node) in nodes.iter_mut().enumerate() {
             if input_queue[idx].is_empty() {
                 node.input_queue.push_back(-1);
-            }
-            else {
-                let Some(q) = input_queue.get_mut(idx) else {panic!();};
+            } else {
+                let Some(q) = input_queue.get_mut(idx) else {
+                    panic!();
+                };
                 while let Some(v) = q.pop_front() {
                     node.input_queue.push_back(v);
                 }
             }
             match node.run_with_cb(&mut || None, &mut |val| {
-                if let Some(q) = output_queue.get_mut(idx) { q.push_back(val) }
+                if let Some(q) = output_queue.get_mut(idx) {
+                    q.push_back(val)
+                }
             }) {
-                Ok(_) => { panic!("program exited"); },
-                Err(RunErr::InputNeeded) => {},
-                Err(_) => { panic!("program error"); },
+                Ok(_) => {
+                    panic!("program exited");
+                }
+                Err(RunErr::InputNeeded) => {}
+                Err(_) => {
+                    panic!("program error");
+                }
             }
             if let Some(vec) = output_queue.get_mut(idx) {
                 while vec.len() >= 3 {
                     if vec[0] == 255 {
-                        if !part2 { return vec[2]; }
+                        if !part2 {
+                            return vec[2];
+                        }
                         nat_buffer = Some((vec[1], vec[2]));
-                    }
-                    else {
-                        let Some(q) = input_queue.get_mut(vec[0] as usize)
-                            else {panic!();};
+                    } else {
+                        let Some(q) = input_queue.get_mut(vec[0] as usize) else {
+                            panic!();
+                        };
                         q.push_back(vec[1]);
                         q.push_back(vec[2]);
                     }

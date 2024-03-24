@@ -7,11 +7,9 @@ pub struct ProgMem(pub Vec<i64>);
 impl FromStr for ProgMem {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(
-            Self(
-                s.split(',').map(|ss| ss.parse::<i64>().unwrap()).collect()
-            )
-        )
+        Ok(Self(
+            s.split(',').map(|ss| ss.parse::<i64>().unwrap()).collect(),
+        ))
     }
 }
 
@@ -105,10 +103,16 @@ impl IntcodeVM {
     }
 
     pub fn step<FIN, FOUT>(&mut self, input: &mut FIN, output: &mut FOUT) -> StepResult
-        where FIN: FnMut() -> Option<i64>, FOUT: FnMut(i64)
+    where
+        FIN: FnMut() -> Option<i64>,
+        FOUT: FnMut(i64),
     {
         if self.pc >= self.mem.len() {
-            return StepResult::InvalidInstr(format!("pc {} greater than max mem {}", self.pc, self.mem.len()));
+            return StepResult::InvalidInstr(format!(
+                "pc {} greater than max mem {}",
+                self.pc,
+                self.mem.len()
+            ));
         }
         let instr = self.mem[self.pc];
 
@@ -121,7 +125,7 @@ impl IntcodeVM {
             self.mem.resize(self.pc + op.size(), 0);
         }
 
-        let mut args = self.mem[self.pc + 1 .. self.pc + op.size()].to_owned();
+        let mut args = self.mem[self.pc + 1..self.pc + op.size()].to_owned();
         for (idx, arg) in args.iter_mut().enumerate() {
             let mode = (instr / 10i64.pow(idx as u32 + 2)) % 10;
             match mode {
@@ -153,24 +157,40 @@ impl IntcodeVM {
         }
 
         match op {
-            Opcode::Add => { self.mem[args[2] as usize] = args[0] + args[1]; },
-            Opcode::Mul => { self.mem[args[2] as usize] = args[0] * args[1]; },
+            Opcode::Add => {
+                self.mem[args[2] as usize] = args[0] + args[1];
+            }
+            Opcode::Mul => {
+                self.mem[args[2] as usize] = args[0] * args[1];
+            }
             Opcode::Inp => {
                 if let Some(val) = self.input_queue.pop_front() {
                     self.mem[args[0] as usize] = val;
-                }
-                else if let Some(val) = input() {
+                } else if let Some(val) = input() {
                     self.mem[args[0] as usize] = val;
+                } else {
+                    return StepResult::InputNeeded;
                 }
-                else { return StepResult::InputNeeded; }
-            },
-            Opcode::Out => { output(args[0]) },
-            Opcode::Jnz => { if args[0] != 0 { return self.do_jump(args[1]); }},
-            Opcode::Jz =>  { if args[0] == 0 { return self.do_jump(args[1]); }},
-            Opcode::Lt =>  { self.mem[args[2] as usize] = if args[0] < args[1] {1} else {0} },
-            Opcode::Eq =>  { self.mem[args[2] as usize] = if args[0] == args[1] {1} else {0} },
-            Opcode::Rlb => { self.relbase += args[0]; },
-            Opcode::Hlt => { return StepResult::Halt; },
+            }
+            Opcode::Out => output(args[0]),
+            Opcode::Jnz => {
+                if args[0] != 0 {
+                    return self.do_jump(args[1]);
+                }
+            }
+            Opcode::Jz => {
+                if args[0] == 0 {
+                    return self.do_jump(args[1]);
+                }
+            }
+            Opcode::Lt => self.mem[args[2] as usize] = if args[0] < args[1] { 1 } else { 0 },
+            Opcode::Eq => self.mem[args[2] as usize] = if args[0] == args[1] { 1 } else { 0 },
+            Opcode::Rlb => {
+                self.relbase += args[0];
+            }
+            Opcode::Hlt => {
+                return StepResult::Halt;
+            }
         }
         self.pc += op.size();
         StepResult::Ok
@@ -186,7 +206,9 @@ impl IntcodeVM {
 
     pub fn run(&mut self) -> Result<(), RunErr> {
         let mut input = || None;
-        let mut output = |v| { println!("{v}"); };
+        let mut output = |v| {
+            println!("{v}");
+        };
         loop {
             match self.step(&mut input, &mut output) {
                 StepResult::Ok => continue,
@@ -197,8 +219,10 @@ impl IntcodeVM {
         }
     }
 
-    pub fn run_with_cb<F1,F2>(&mut self, input: &mut F1, output: &mut F2) -> Result<(), RunErr>
-        where F1: FnMut() -> Option<i64>, F2: FnMut(i64)
+    pub fn run_with_cb<F1, F2>(&mut self, input: &mut F1, output: &mut F2) -> Result<(), RunErr>
+    where
+        F1: FnMut() -> Option<i64>,
+        F2: FnMut(i64),
     {
         loop {
             match self.step(input, output) {
@@ -211,13 +235,13 @@ impl IntcodeVM {
     }
 
     pub fn run_interactive<F>(&mut self, non_ascii_output: &mut F) -> Result<(), RunErr>
-        where F: FnMut(i64)
+    where
+        F: FnMut(i64),
     {
         let mut output = |c| {
             if c < 128 {
                 print!("{}", c as u8 as char);
-            }
-            else {
+            } else {
                 non_ascii_output(c);
             }
         };
@@ -225,16 +249,20 @@ impl IntcodeVM {
             match self.step(&mut || None, &mut output) {
                 StepResult::Ok => continue,
                 StepResult::Halt => return Ok(()),
-                StepResult::InputNeeded => {},
+                StepResult::InputNeeded => {}
                 StepResult::InvalidInstr(err) => return Err(RunErr::InvalidInstr(err)),
             }
             let mut buffer = String::new();
             std::io::stdin().read_line(&mut buffer).unwrap();
-            buffer.chars().for_each(|c| self.input_queue.push_back(c as u8 as i64));
+            buffer
+                .chars()
+                .for_each(|c| self.input_queue.push_back(c as u8 as i64));
         }
     }
 
     pub fn ascii_input(&mut self, input: &str) {
-        input.chars().for_each(|c| self.input_queue.push_back(c as u8 as i64));
+        input
+            .chars()
+            .for_each(|c| self.input_queue.push_back(c as u8 as i64));
     }
 }

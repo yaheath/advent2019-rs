@@ -14,7 +14,7 @@ impl FromStr for Chem {
         let (q, name) = s.split_once(' ').unwrap();
         let name = name.to_string();
         let qty = q.parse::<usize>().unwrap();
-        Ok(Self{name, qty})
+        Ok(Self { name, qty })
     }
 }
 
@@ -28,54 +28,64 @@ impl FromStr for Reaction {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (ing, pr) = s.split_once(" => ").unwrap();
-        let ingredients = ing.split(", ").map(|i| i.parse::<Chem>().unwrap()).collect();
+        let ingredients = ing
+            .split(", ")
+            .map(|i| i.parse::<Chem>().unwrap())
+            .collect();
         let product = pr.parse::<Chem>().unwrap();
 
-        Ok(Self{ingredients, product})
+        Ok(Self {
+            ingredients,
+            product,
+        })
     }
 }
 
 fn mk_table(input: &[Reaction]) -> HashMap<&str, &Reaction> {
-    input.iter()
-        .map(|i| (i.product.name.as_str(), i))
-        .collect()
+    input.iter().map(|i| (i.product.name.as_str(), i)).collect()
 }
 
 fn search(table: &HashMap<&str, &Reaction>, n_fuel: usize) -> usize {
     let mut queue = VecDeque::new();
-    let target = Chem{name: "FUEL".to_string(), qty: n_fuel};
+    let target = Chem {
+        name: "FUEL".to_string(),
+        qty: n_fuel,
+    };
     queue.push_back(target);
     let mut n_ore = 0;
     let mut inventory: HashMap<String, usize> = HashMap::new();
 
     while let Some(target) = queue.pop_front() {
         let mut needed = target.qty;
-        inventory.entry(target.name.clone())
-            .and_modify(|e| {
-                if *e >= needed {
-                    *e -= needed;
-                    needed = 0;
-                }
-                else {
-                    needed -= *e;
-                    *e = 0;
-                }
-            });
-        if needed == 0 { continue; }
+        inventory.entry(target.name.clone()).and_modify(|e| {
+            if *e >= needed {
+                *e -= needed;
+                needed = 0;
+            } else {
+                needed -= *e;
+                *e = 0;
+            }
+        });
+        if needed == 0 {
+            continue;
+        }
         let reaction = table[target.name.as_str()];
         let num_per_batch = reaction.product.qty;
         let num_batches = (needed + num_per_batch - 1) / num_per_batch;
         let num_produced = num_batches * num_per_batch;
-        inventory.entry(target.name.clone())
+        inventory
+            .entry(target.name.clone())
             .and_modify(|e| *e += num_produced - needed)
             .or_insert(num_produced - needed);
         for chem in &reaction.ingredients {
             let num_required = chem.qty * num_batches;
             if chem.name == "ORE" {
                 n_ore += num_required;
-            }
-            else {
-                queue.push_back(Chem{name: chem.name.clone(), qty: num_required});
+            } else {
+                queue.push_back(Chem {
+                    name: chem.name.clone(),
+                    qty: num_required,
+                });
             }
         }
     }
@@ -107,30 +117,25 @@ fn part2(input: &[Reaction]) -> usize {
                 } else {
                     est + interval
                 };
-            }
-            else if upperbound == 0 {
+            } else if upperbound == 0 {
                 est += interval;
-            }
-            else {
+            } else {
                 lowerbound = est;
                 est = lowerbound + (upperbound - lowerbound) / 2;
                 if est == lowerbound {
                     return est;
                 }
             }
-        }
-        else if upperbound == 0 {
+        } else if upperbound == 0 {
             upperbound = est;
             est = if lowerbound > 0 {
                 lowerbound + (upperbound - lowerbound) / 2
             } else {
                 est - interval
             };
-        }
-        else if lowerbound == 0 {
+        } else if lowerbound == 0 {
             est -= interval;
-        }
-        else {
+        } else {
             upperbound = est;
             est = lowerbound + (upperbound - lowerbound) / 2;
             if est == lowerbound {
@@ -154,28 +159,30 @@ mod tests {
     #[test]
     fn day14_test() {
         let input: Vec<Reaction> = test_input(
-"10 ORE => 10 A
+            "10 ORE => 10 A
 1 ORE => 1 B
 7 A, 1 B => 1 C
 7 A, 1 C => 1 D
 7 A, 1 D => 1 E
 7 A, 1 E => 1 FUEL
-");
+",
+        );
         assert_eq!(part1(&input), 31);
 
         let input: Vec<Reaction> = test_input(
-"9 ORE => 2 A
+            "9 ORE => 2 A
 8 ORE => 3 B
 7 ORE => 5 C
 3 A, 4 B => 1 AB
 5 B, 7 C => 1 BC
 4 C, 1 A => 1 CA
 2 AB, 3 BC, 4 CA => 1 FUEL
-");
+",
+        );
         assert_eq!(part1(&input), 165);
 
         let input: Vec<Reaction> = test_input(
-"157 ORE => 5 NZVS
+            "157 ORE => 5 NZVS
 165 ORE => 6 DCFZ
 44 XJWVT, 5 KHKGT, 1 QDVJ, 29 NZVS, 9 GPVTF, 48 HKGWZ => 1 FUEL
 12 HKGWZ, 1 GPVTF, 8 PSHF => 9 QDVJ
@@ -184,12 +191,13 @@ mod tests {
 7 DCFZ, 7 PSHF => 2 XJWVT
 165 ORE => 2 GPVTF
 3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT
-");
+",
+        );
         assert_eq!(part1(&input), 13312);
         assert_eq!(part2(&input), 82892753);
 
         let input: Vec<Reaction> = test_input(
-"2 VPVL, 7 FWMGM, 2 CXFTF, 11 MNCFX => 1 STKFG
+            "2 VPVL, 7 FWMGM, 2 CXFTF, 11 MNCFX => 1 STKFG
 17 NVRVD, 3 JNWZP => 8 VPVL
 53 STKFG, 6 MNCFX, 46 VJHF, 81 HVMC, 68 CXFTF, 25 GNMV => 1 FUEL
 22 VJHF, 37 MNCFX => 5 FWMGM
@@ -201,12 +209,13 @@ mod tests {
 1 NVRVD => 8 CXFTF
 1 VJHF, 6 MNCFX => 4 RFSQX
 176 ORE => 6 VJHF
-");
+",
+        );
         assert_eq!(part1(&input), 180697);
         assert_eq!(part2(&input), 5586022);
 
         let input: Vec<Reaction> = test_input(
-"171 ORE => 8 CNZTR
+            "171 ORE => 8 CNZTR
 7 ZLQW, 3 BMBT, 9 XCVML, 26 XMNCP, 1 WPTQ, 2 MZWV, 1 RJRHP => 4 PLWSL
 114 ORE => 4 BHXH
 14 VRPVC => 6 BMBT
@@ -223,7 +232,8 @@ mod tests {
 121 ORE => 7 VRPVC
 7 XCVML => 6 RJRHP
 5 BHXH, 4 VRPVC => 5 LTCX
-");
+",
+        );
         assert_eq!(part1(&input), 2210736);
         assert_eq!(part2(&input), 460664);
     }

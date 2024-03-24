@@ -1,5 +1,5 @@
-use std::vec::Vec;
 use itertools::Itertools;
+use std::vec::Vec;
 use ya_advent_lib::read::read_input;
 extern crate advent2019;
 use advent2019::intcode::{IntcodeVM, ProgMem};

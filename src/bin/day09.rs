@@ -32,13 +32,20 @@ mod tests {
 
     #[test]
     fn day07_test() {
-        let progmem = "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99".parse::<ProgMem>().unwrap();
+        let progmem = "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99"
+            .parse::<ProgMem>()
+            .unwrap();
         let mut vm = IntcodeVM::with_mem(&progmem);
         let mut outv: Vec<i64> = Vec::new();
         vm.run_with_cb(&mut || None, &mut |v| outv.push(v)).unwrap();
-        assert_eq!(outv, [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99]);
+        assert_eq!(
+            outv,
+            [109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99]
+        );
 
-        let progmem = "1102,34915192,34915192,7,4,7,99,0".parse::<ProgMem>().unwrap();
+        let progmem = "1102,34915192,34915192,7,4,7,99,0"
+            .parse::<ProgMem>()
+            .unwrap();
         let mut vm = IntcodeVM::with_mem(&progmem);
         let mut outv: Vec<i64> = Vec::new();
         vm.run_with_cb(&mut || None, &mut |v| outv.push(v)).unwrap();

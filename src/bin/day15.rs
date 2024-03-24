@@ -30,9 +30,13 @@ impl Droid {
         self.vm.input_queue.push_back(v);
         let mut result = -1;
         match self.vm.run_with_cb(&mut || None, &mut |v| result = v) {
-            Ok(_) => { panic!("program exited"); },
-            Err(RunErr::InputNeeded) => {},
-            Err(_) => { panic!("program error"); },
+            Ok(_) => {
+                panic!("program exited");
+            }
+            Err(RunErr::InputNeeded) => {}
+            Err(_) => {
+                panic!("program error");
+            }
         }
         match result {
             0 => MoveResult::HitWall,
@@ -55,19 +59,25 @@ fn recurse(steps: usize, loc: Coord2D, droid: &mut Droid, grid: &mut InfiniteGri
     for dir in [CDir::N, CDir::E, CDir::W, CDir::S] {
         let neigh = grid.get_c(loc + dir);
         match neigh {
-            Cell::Wall => { continue; },
-            Cell::Open(n) if n <= steps + 1 => { continue; },
-            Cell::Goal(n) if n <= steps + 1 => { continue; },
-            _ => {},
+            Cell::Wall => {
+                continue;
+            }
+            Cell::Open(n) if n <= steps + 1 => {
+                continue;
+            }
+            Cell::Goal(n) if n <= steps + 1 => {
+                continue;
+            }
+            _ => {}
         }
         match droid.step(dir) {
             MoveResult::HitWall => {
                 grid.set_c(loc + dir, Cell::Wall);
                 continue;
-            },
+            }
             MoveResult::Moved => {
                 grid.set_c(loc + dir, Cell::Open(steps + 1));
-            },
+            }
             MoveResult::FoundGoal => {
                 grid.set_c(loc + dir, Cell::Goal(steps + 1));
             }
@@ -88,25 +98,31 @@ fn explore(droid: &mut Droid) -> InfiniteGrid<Cell> {
 fn part1(input: &ProgMem) -> (usize, InfiniteGrid<Cell>) {
     let mut droid = Droid::with_mem(input);
     let grid = explore(&mut droid);
-    let steps = grid.iter().find_map(|(_, cell)| match cell {
-        Cell::Goal(n) => Some(*n),
-        _ => None,
-    })
-    .unwrap();
+    let steps = grid
+        .iter()
+        .find_map(|(_, cell)| match cell {
+            Cell::Goal(n) => Some(*n),
+            _ => None,
+        })
+        .unwrap();
     (steps, grid)
 }
 
 fn part2(grid: &InfiniteGrid<Cell>) -> usize {
-    let start = grid.iter().find_map(|((x, y), c)| match c {
-        Cell::Goal(_) => Some(Coord2D::new(*x, *y)),
-        _ => None,
-    }).unwrap();
+    let start = grid
+        .iter()
+        .find_map(|((x, y), c)| match c {
+            Cell::Goal(_) => Some(Coord2D::new(*x, *y)),
+            _ => None,
+        })
+        .unwrap();
     let mut traversed: HashMap<Coord2D, usize> = HashMap::new();
     let mut queue: VecDeque<(Coord2D, usize)> = VecDeque::new();
     queue.push_back((start, 0));
     traversed.insert(start, 0);
     while let Some((pos, steps)) = queue.pop_front() {
-        pos.neighbors4().iter()
+        pos.neighbors4()
+            .iter()
             .filter(|n| matches!(grid.get_c(**n), Cell::Open(_)))
             .for_each(|n| {
                 if !traversed.contains_key(n) || traversed[n] > steps + 1 {
@@ -132,20 +148,19 @@ mod tests {
     #[test]
     fn day15_test() {
         let input = test_input::<String>(
-" ##   
+            " ##   
 #..## 
 #.#..#
 #.O.# 
  ###  
-");
-        let grid = InfiniteGrid::from_input(&input, Cell::Unexplored,
-            |c, _, _| match c{
-                '.' => Some(Cell::Open(0)),
-                '#' => Some(Cell::Wall),
-                'O' => Some(Cell::Goal(0)),
-                _ => None,
-            }
+",
         );
+        let grid = InfiniteGrid::from_input(&input, Cell::Unexplored, |c, _, _| match c {
+            '.' => Some(Cell::Open(0)),
+            '#' => Some(Cell::Wall),
+            'O' => Some(Cell::Goal(0)),
+            _ => None,
+        });
         assert_eq!(part2(&grid), 4);
     }
 }

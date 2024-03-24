@@ -1,6 +1,6 @@
+use itertools::Itertools;
 use std::collections::HashSet;
 use std::vec::Vec;
-use itertools::Itertools;
 use ya_advent_lib::coords::Coord2D;
 use ya_advent_lib::read::read_input;
 
@@ -19,39 +19,48 @@ impl BugMap {
                 }
             }
         }
-        BugMap{bugs, min_z: 0, max_z: 0}
+        BugMap {
+            bugs,
+            min_z: 0,
+            max_z: 0,
+        }
     }
 
     fn bio_rating(&self) -> u64 {
-        (0..5).cartesian_product(0..5)
+        (0..5)
+            .cartesian_product(0..5)
             .enumerate()
-            .filter_map(|(idx, (y, x))|
+            .filter_map(|(idx, (y, x))| {
                 if self.bugs.contains(&(x, y, 0)) {
                     Some(2u64.pow(idx as u32))
                 } else {
                     None
                 }
-            )
+            })
             .sum()
     }
 
     fn step(&mut self) {
         let mut next = HashSet::new();
-        (0..5).cartesian_product(0..5)
-            .for_each(|(x, y)| {
-                let occupied = self.bugs.contains(&(x, y, 0));
-                match (self.neighbors(x, y), occupied) {
-                    (1, true) => { next.insert((x, y, 0)); },
-                    (1, false) | (2, false) => { next.insert((x, y, 0)); },
-                    _ => {},
+        (0..5).cartesian_product(0..5).for_each(|(x, y)| {
+            let occupied = self.bugs.contains(&(x, y, 0));
+            match (self.neighbors(x, y), occupied) {
+                (1, true) => {
+                    next.insert((x, y, 0));
                 }
-            });
+                (1, false) | (2, false) => {
+                    next.insert((x, y, 0));
+                }
+                _ => {}
+            }
+        });
         self.bugs = next;
     }
 
     fn neighbors(&self, x: i64, y: i64) -> usize {
         let c = Coord2D::new(x, y);
-        c.neighbors4().into_iter()
+        c.neighbors4()
+            .into_iter()
             .filter(|c| self.bugs.contains(&(c.x, c.y, 0)))
             .count()
     }
@@ -72,24 +81,26 @@ impl BugMap {
 
     fn step2(&mut self) {
         let mut next = HashSet::new();
-        let z_range = self.min_z-1 ..= self.max_z+1;
-        (0..5).cartesian_product(0..5)
+        let z_range = self.min_z - 1..=self.max_z + 1;
+        (0..5)
+            .cartesian_product(0..5)
             .filter(|(x, y)| !(*x == 2 && *y == 2))
             .cartesian_product(z_range)
             .for_each(|((x, y), z)| {
                 let occupied = self.bugs.contains(&(x, y, z));
                 match (self.neighbors2(x, y, z), occupied) {
-                    (1, true) => { next.insert((x, y, z)); },
+                    (1, true) => {
+                        next.insert((x, y, z));
+                    }
                     (1, false) | (2, false) => {
                         next.insert((x, y, z));
                         if z < self.min_z {
                             self.min_z = z;
-                        }
-                        else if z > self.max_z {
+                        } else if z > self.max_z {
                             self.max_z = z;
                         }
-                    },
-                    _ => {},
+                    }
+                    _ => {}
                 }
             });
         self.bugs = next;
@@ -100,30 +111,86 @@ impl BugMap {
 
         // left neighbor(s)
         count += match (x, y) {
-            (0, _) => if self.bugs.contains(&(1, 2, z-1)) {1} else {0},
-            (3, 2) => (0..5).filter(|yy| self.bugs.contains(&(4, *yy, z+1))).count(),
-            _ => if self.bugs.contains(&(x-1, y, z)) {1} else {0},
+            (0, _) => {
+                if self.bugs.contains(&(1, 2, z - 1)) {
+                    1
+                } else {
+                    0
+                }
+            }
+            (3, 2) => (0..5)
+                .filter(|yy| self.bugs.contains(&(4, *yy, z + 1)))
+                .count(),
+            _ => {
+                if self.bugs.contains(&(x - 1, y, z)) {
+                    1
+                } else {
+                    0
+                }
+            }
         };
 
         // right neighbor(s)
         count += match (x, y) {
-            (4, _) => if self.bugs.contains(&(3, 2, z-1)) {1} else {0},
-            (1, 2) => (0..5).filter(|yy| self.bugs.contains(&(0, *yy, z+1))).count(),
-            _ => if self.bugs.contains(&(x+1, y, z)) {1} else {0},
+            (4, _) => {
+                if self.bugs.contains(&(3, 2, z - 1)) {
+                    1
+                } else {
+                    0
+                }
+            }
+            (1, 2) => (0..5)
+                .filter(|yy| self.bugs.contains(&(0, *yy, z + 1)))
+                .count(),
+            _ => {
+                if self.bugs.contains(&(x + 1, y, z)) {
+                    1
+                } else {
+                    0
+                }
+            }
         };
 
         // top neighbor(s)
         count += match (x, y) {
-            (_, 0) => if self.bugs.contains(&(2, 1, z-1)) {1} else {0},
-            (2, 3) => (0..5).filter(|xx| self.bugs.contains(&(*xx, 4, z+1))).count(),
-            _ => if self.bugs.contains(&(x, y-1, z)) {1} else {0},
+            (_, 0) => {
+                if self.bugs.contains(&(2, 1, z - 1)) {
+                    1
+                } else {
+                    0
+                }
+            }
+            (2, 3) => (0..5)
+                .filter(|xx| self.bugs.contains(&(*xx, 4, z + 1)))
+                .count(),
+            _ => {
+                if self.bugs.contains(&(x, y - 1, z)) {
+                    1
+                } else {
+                    0
+                }
+            }
         };
 
         // bottom neighbor(s)
         count += match (x, y) {
-            (_, 4) => if self.bugs.contains(&(2, 3, z-1)) {1} else {0},
-            (2, 1) => (0..5).filter(|xx| self.bugs.contains(&(*xx, 0, z+1))).count(),
-            _ => if self.bugs.contains(&(x, y+1, z)) {1} else {0},
+            (_, 4) => {
+                if self.bugs.contains(&(2, 3, z - 1)) {
+                    1
+                } else {
+                    0
+                }
+            }
+            (2, 1) => (0..5)
+                .filter(|xx| self.bugs.contains(&(*xx, 0, z + 1)))
+                .count(),
+            _ => {
+                if self.bugs.contains(&(x, y + 1, z)) {
+                    1
+                } else {
+                    0
+                }
+            }
         };
 
         count
@@ -166,12 +233,13 @@ mod tests {
     #[test]
     fn day24_test() {
         let input: Vec<String> = test_input(
-"....#
+            "....#
 #..#.
 #..##
 ..#..
 #....
-");
+",
+        );
         assert_eq!(part1(&input), 2129920);
 
         let mut bugmap = BugMap::from_input(&input);

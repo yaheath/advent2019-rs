@@ -21,27 +21,36 @@ fn part2(input: &ProgMem) -> i64 {
     while !done {
         outp.clear();
         match vm.run_with_cb(&mut || None, &mut |v| outp.push(v)) {
-            Ok(_) => { done = true; },
-            Err(RunErr::InputNeeded) => {},
-            Err(_) => { panic!(); },
+            Ok(_) => {
+                done = true;
+            }
+            Err(RunErr::InputNeeded) => {}
+            Err(_) => {
+                panic!();
+            }
         }
         outp.chunks(3).for_each(|v| {
             if v[0] == -1 && v[1] == 0 {
                 score = v[2];
-            }
-            else {
+            } else {
                 match v[2] {
-                    3 => { paddle_pos = v[0]; },
-                    4 => { ball_pos = v[0]; },
-                    _ => {},
+                    3 => {
+                        paddle_pos = v[0];
+                    }
+                    4 => {
+                        ball_pos = v[0];
+                    }
+                    _ => {}
                 };
             }
         });
-        vm.input_queue.push_back(
-            if paddle_pos < ball_pos {1}
-            else if paddle_pos > ball_pos {-1}
-            else {0}
-        );
+        vm.input_queue.push_back(if paddle_pos < ball_pos {
+            1
+        } else if paddle_pos > ball_pos {
+            -1
+        } else {
+            0
+        });
     }
     score
 }

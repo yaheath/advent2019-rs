@@ -12,12 +12,18 @@ impl FromStr for Input {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (cent, sat) = s.split_once(')').unwrap();
-        Ok(Input{cent: cent.to_owned(), sat: sat.to_owned()})
+        Ok(Input {
+            cent: cent.to_owned(),
+            sat: sat.to_owned(),
+        })
     }
 }
 
 fn setup(input: &[Input]) -> HashMap<&str, &str> {
-    input.iter().map(|i| (i.sat.as_str(), i.cent.as_str())).collect()
+    input
+        .iter()
+        .map(|i| (i.sat.as_str(), i.cent.as_str()))
+        .collect()
 }
 
 fn part1(input: &[Input]) -> usize {

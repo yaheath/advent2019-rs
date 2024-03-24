@@ -11,18 +11,21 @@ impl FromStr for Input {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let digits = s.chars().map(|c| (c as u8) - b'0').collect();
-        Ok(Input{digits})
+        Ok(Input { digits })
     }
 }
 
 fn fft(digits: &[u8]) -> Vec<u8> {
     (1..=digits.len())
-        .map(|n| repeat(0i32).take(n)
-                    .chain(repeat(1i32).take(n))
-                    .chain(repeat(0i32).take(n))
-                    .chain(repeat(-1i32).take(n))
-                    .cycle()
-                    .skip(1))
+        .map(|n| {
+            repeat(0i32)
+                .take(n)
+                .chain(repeat(1i32).take(n))
+                .chain(repeat(0i32).take(n))
+                .chain(repeat(-1i32).take(n))
+                .cycle()
+                .skip(1)
+        })
         .map(|itr| digits.iter().zip(itr).map(|(a, b)| *a as i32 * b).sum())
         .map(|val: i32| (val.abs() % 10) as u8)
         .collect()
@@ -37,7 +40,9 @@ fn part1(input: &Input) -> String {
 }
 
 fn part2(input: &Input) -> String {
-    let offset = input.digits.iter()
+    let offset = input
+        .digits
+        .iter()
         .take(7)
         .map(|b| (*b + b'0') as char)
         .collect::<String>()
@@ -51,7 +56,7 @@ fn part2(input: &Input) -> String {
     }
     for _ in 0..100 {
         for i in (0..digits.len() - 1).rev() {
-            digits[i] = (digits[i] + digits[i+1]) % 10;
+            digits[i] = (digits[i] + digits[i + 1]) % 10;
         }
     }
     digits.iter().take(8).map(|c| (*c + b'0') as char).collect()

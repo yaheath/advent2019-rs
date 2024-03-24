@@ -1,5 +1,5 @@
-use std::vec::Vec;
 use itertools::Itertools;
+use std::vec::Vec;
 use ya_advent_lib::read::read_input;
 extern crate advent2019;
 use advent2019::intcode::{IntcodeVM, ProgMem};
@@ -15,7 +15,8 @@ fn test_loc(input: &ProgMem, x: i64, y: i64) -> i64 {
 }
 
 fn part1(input: &ProgMem) -> usize {
-    (0..50).cartesian_product(0..50)
+    (0..50)
+        .cartesian_product(0..50)
         .filter(|(x, y)| test_loc(input, *x, *y) != 0)
         .count()
 }
@@ -36,8 +37,7 @@ fn part2(input: &ProgMem) -> i64 {
     loop {
         if test_loc(input, x1 + 1, y1) == 1 {
             x1 += 1;
-        }
-        else {
+        } else {
             y1 += 1;
         }
         if test_loc(input, x1 - 99, y1 + 99) == 1 {

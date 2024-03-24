@@ -6,7 +6,9 @@ use advent2019::intcode::{IntcodeVM, ProgMem};
 fn part1(input: &ProgMem) -> i64 {
     let mut last_output = 0;
     let mut vm = IntcodeVM::with_mem(input);
-    let mut output = |v| { last_output = v; };
+    let mut output = |v| {
+        last_output = v;
+    };
     vm.run_with_cb(&mut || Some(1), &mut output).unwrap();
     last_output
 }
@@ -14,7 +16,9 @@ fn part1(input: &ProgMem) -> i64 {
 fn part2(input: &ProgMem) -> i64 {
     let mut last_output = 0;
     let mut vm = IntcodeVM::with_mem(input);
-    let mut output = |v| { last_output = v; };
+    let mut output = |v| {
+        last_output = v;
+    };
     vm.run_with_cb(&mut || Some(5), &mut output).unwrap();
     last_output
 }
@@ -40,46 +44,61 @@ mod tests {
 
         let input: Vec<ProgMem> = test_input("3,9,8,9,10,9,4,9,99,-1,8");
         let mut vm = IntcodeVM::with_mem(&input[0]);
-        vm.run_with_cb(&mut || Some(8), &mut |v| assert_eq!(v, 1)).unwrap();
+        vm.run_with_cb(&mut || Some(8), &mut |v| assert_eq!(v, 1))
+            .unwrap();
         let mut vm = IntcodeVM::with_mem(&input[0]);
-        vm.run_with_cb(&mut || Some(2), &mut |v| assert_eq!(v, 0)).unwrap();
+        vm.run_with_cb(&mut || Some(2), &mut |v| assert_eq!(v, 0))
+            .unwrap();
 
         let input: Vec<ProgMem> = test_input("3,9,7,9,10,9,4,9,99,-1,8");
         let mut vm = IntcodeVM::with_mem(&input[0]);
-        vm.run_with_cb(&mut || Some(8), &mut |v| assert_eq!(v, 0)).unwrap();
+        vm.run_with_cb(&mut || Some(8), &mut |v| assert_eq!(v, 0))
+            .unwrap();
         let mut vm = IntcodeVM::with_mem(&input[0]);
-        vm.run_with_cb(&mut || Some(2), &mut |v| assert_eq!(v, 1)).unwrap();
+        vm.run_with_cb(&mut || Some(2), &mut |v| assert_eq!(v, 1))
+            .unwrap();
 
         let input: Vec<ProgMem> = test_input("3,3,1108,-1,8,3,4,3,99");
         let mut vm = IntcodeVM::with_mem(&input[0]);
-        vm.run_with_cb(&mut || Some(8), &mut |v| assert_eq!(v, 1)).unwrap();
+        vm.run_with_cb(&mut || Some(8), &mut |v| assert_eq!(v, 1))
+            .unwrap();
         let mut vm = IntcodeVM::with_mem(&input[0]);
-        vm.run_with_cb(&mut || Some(2), &mut |v| assert_eq!(v, 0)).unwrap();
+        vm.run_with_cb(&mut || Some(2), &mut |v| assert_eq!(v, 0))
+            .unwrap();
 
         let input: Vec<ProgMem> = test_input("3,3,1107,-1,8,3,4,3,99");
         let mut vm = IntcodeVM::with_mem(&input[0]);
-        vm.run_with_cb(&mut || Some(8), &mut |v| assert_eq!(v, 0)).unwrap();
+        vm.run_with_cb(&mut || Some(8), &mut |v| assert_eq!(v, 0))
+            .unwrap();
         let mut vm = IntcodeVM::with_mem(&input[0]);
-        vm.run_with_cb(&mut || Some(2), &mut |v| assert_eq!(v, 1)).unwrap();
+        vm.run_with_cb(&mut || Some(2), &mut |v| assert_eq!(v, 1))
+            .unwrap();
 
         let input: Vec<ProgMem> = test_input("3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9");
         let mut vm = IntcodeVM::with_mem(&input[0]);
-        vm.run_with_cb(&mut || Some(0), &mut |v| assert_eq!(v, 0)).unwrap();
+        vm.run_with_cb(&mut || Some(0), &mut |v| assert_eq!(v, 0))
+            .unwrap();
         let mut vm = IntcodeVM::with_mem(&input[0]);
-        vm.run_with_cb(&mut || Some(2), &mut |v| assert_eq!(v, 1)).unwrap();
+        vm.run_with_cb(&mut || Some(2), &mut |v| assert_eq!(v, 1))
+            .unwrap();
 
         let input: Vec<ProgMem> = test_input("3,3,1105,-1,9,1101,0,0,12,4,12,99,1");
         let mut vm = IntcodeVM::with_mem(&input[0]);
-        vm.run_with_cb(&mut || Some(0), &mut |v| assert_eq!(v, 0)).unwrap();
+        vm.run_with_cb(&mut || Some(0), &mut |v| assert_eq!(v, 0))
+            .unwrap();
         let mut vm = IntcodeVM::with_mem(&input[0]);
-        vm.run_with_cb(&mut || Some(2), &mut |v| assert_eq!(v, 1)).unwrap();
+        vm.run_with_cb(&mut || Some(2), &mut |v| assert_eq!(v, 1))
+            .unwrap();
 
         let input: Vec<ProgMem> = test_input("3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99");
         let mut vm = IntcodeVM::with_mem(&input[0]);
-        vm.run_with_cb(&mut || Some(-1), &mut |v| assert_eq!(v, 999)).unwrap();
+        vm.run_with_cb(&mut || Some(-1), &mut |v| assert_eq!(v, 999))
+            .unwrap();
         let mut vm = IntcodeVM::with_mem(&input[0]);
-        vm.run_with_cb(&mut || Some(8), &mut |v| assert_eq!(v, 1000)).unwrap();
+        vm.run_with_cb(&mut || Some(8), &mut |v| assert_eq!(v, 1000))
+            .unwrap();
         let mut vm = IntcodeVM::with_mem(&input[0]);
-        vm.run_with_cb(&mut || Some(80), &mut |v| assert_eq!(v, 1001)).unwrap();
+        vm.run_with_cb(&mut || Some(80), &mut |v| assert_eq!(v, 1001))
+            .unwrap();
     }
 }

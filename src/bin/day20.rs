@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::vec::Vec;
 use ya_advent_lib::algorithm::dijkstra;
-use ya_advent_lib::coords::{Coord2D, CDir};
+use ya_advent_lib::coords::{CDir, Coord2D};
 use ya_advent_lib::grid::Grid;
 use ya_advent_lib::read::read_input;
 
@@ -11,15 +11,15 @@ enum Cell {
     Wall,
     Open,
     LabelPart(char),
-    InnerPortal([char;2]),
-    OuterPortal([char;2]),
+    InnerPortal([char; 2]),
+    OuterPortal([char; 2]),
 }
 
 impl From<char> for Cell {
     fn from(c: char) -> Self {
         match c {
             '.' => Cell::Open,
-            'A' ..= 'Z' => Cell::LabelPart(c),
+            'A'..='Z' => Cell::LabelPart(c),
             '#' => Cell::Wall,
             _ => Cell::Null,
         }
@@ -40,8 +40,8 @@ impl From<Cell> for char {
 
 struct Map {
     grid: Grid<Cell>,
-    inners: HashMap<[char;2], Coord2D>,
-    outers: HashMap<[char;2], Coord2D>,
+    inners: HashMap<[char; 2], Coord2D>,
+    outers: HashMap<[char; 2], Coord2D>,
 }
 
 fn mkmap(input: &[String]) -> Map {
@@ -56,7 +56,9 @@ fn mkmap(input: &[String]) -> Map {
             match grid.get(x, y) {
                 Cell::LabelPart(c1) => {
                     let coord1 = Coord2D::new(x, y);
-                    let (coord2, c2) = coord1.neighbors4().iter()
+                    let (coord2, c2) = coord1
+                        .neighbors4()
+                        .iter()
                         .find_map(|n| match grid.get_c(*n) {
                             Cell::LabelPart(c2) => Some((*n, c2)),
                             _ => None,
@@ -66,50 +68,56 @@ fn mkmap(input: &[String]) -> Map {
                         (1, 0) => {
                             if matches!(grid.get_c(coord1 + CDir::W), Cell::Open) {
                                 coord1 + CDir::W
-                            }
-                            else {
+                            } else {
                                 coord2 + CDir::E
                             }
-                        },
+                        }
                         (0, 1) => {
                             if matches!(grid.get_c(coord1 + CDir::N), Cell::Open) {
                                 coord1 + CDir::N
-                            }
-                            else {
+                            } else {
                                 coord2 + CDir::S
                             }
-                        },
+                        }
                         _ => panic!(),
                     };
                     grid.set_c(coord1, Cell::Null);
                     grid.set_c(coord2, Cell::Null);
-                    let portal = if portalcoord.x < 4 || portalcoord.y < 4 ||
-                        portalcoord.x > grid_w - 6 || portalcoord.y > grid_h - 6 {
-                            outers.insert([c1, c2], portalcoord);
-                            Cell::OuterPortal([c1, c2])
-                    }
-                    else {
-                            inners.insert([c1, c2], portalcoord);
-                            Cell::InnerPortal([c1, c2])
+                    let portal = if portalcoord.x < 4
+                        || portalcoord.y < 4
+                        || portalcoord.x > grid_w - 6
+                        || portalcoord.y > grid_h - 6
+                    {
+                        outers.insert([c1, c2], portalcoord);
+                        Cell::OuterPortal([c1, c2])
+                    } else {
+                        inners.insert([c1, c2], portalcoord);
+                        Cell::InnerPortal([c1, c2])
                     };
                     grid.set_c(portalcoord, portal);
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
     }
     // grid.print();
-    Map{grid, inners, outers}
+    Map {
+        grid,
+        inners,
+        outers,
+    }
 }
 
 fn traverse(input: &[String], part2: bool) -> usize {
     let map = mkmap(input);
-    let start_loc:Coord2D =
-        map.grid.find(|c, _, _| matches!(c, Cell::OuterPortal(['A','A'])))
+    let start_loc: Coord2D = map
+        .grid
+        .find(|c, _, _| matches!(c, Cell::OuterPortal(['A', 'A'])))
         .unwrap()
         .into();
-    let target_loc:Coord2D =
-        map.grid.find(|c, _, _| matches!(c, Cell::OuterPortal(['Z','Z'])))
+    let target_loc: Coord2D = map
+        .grid
+        .find(|c, _, _| matches!(c, Cell::OuterPortal(['Z', 'Z'])))
         .unwrap()
         .into();
     let start = (start_loc, 0);
@@ -119,37 +127,43 @@ fn traverse(input: &[String], part2: bool) -> usize {
         start,
         |loc| *loc == target,
         |(loc, depth)| {
-            let mut v = loc.neighbors4().into_iter()
-                .filter(|c| matches!(map.grid.get_c(*c), Cell::Open | Cell::OuterPortal(_) | Cell::InnerPortal(_)))
+            let mut v = loc
+                .neighbors4()
+                .into_iter()
+                .filter(|c| {
+                    matches!(
+                        map.grid.get_c(*c),
+                        Cell::Open | Cell::OuterPortal(_) | Cell::InnerPortal(_)
+                    )
+                })
                 .map(|c| ((c, *depth), 1))
                 .collect::<Vec<_>>();
             match map.grid.get_c(*loc) {
-                Cell::OuterPortal(_) if part2 && *depth == 0 => {},
+                Cell::OuterPortal(_) if part2 && *depth == 0 => {}
                 Cell::OuterPortal(label) => {
                     if let Some(p) = map.inners.get(&label) {
                         if part2 {
                             v.push(((*p, depth - 1), 1));
-                        }
-                        else {
+                        } else {
                             v.push(((*p, 0), 1));
                         }
                     }
-                },
+                }
                 Cell::InnerPortal(label) => {
                     if let Some(p) = map.outers.get(&label) {
                         if part2 {
                             v.push(((*p, depth + 1), 1));
-                        }
-                        else {
+                        } else {
                             v.push(((*p, 0), 1));
                         }
                     }
-                },
-                _ => {},
+                }
+                _ => {}
             }
             v
         },
-    ).unwrap()
+    )
+    .unwrap()
 }
 
 fn part1(input: &[String]) -> usize {
