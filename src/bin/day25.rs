@@ -261,13 +261,15 @@ fn dir_cmd(dir: CDir) -> &'static str {
 }
 
 #[allow(dead_code)]
-fn part1(input: &ProgMem) -> i64 {
+fn play_interactive(input: &ProgMem) -> i64 {
     let mut vm = IntcodeVM::with_mem(&input);
     let mut out = 0;
     vm.run_interactive(&mut |v| {out = v;}).unwrap();
     out
 }
+
 fn main() {
     let input: Vec<ProgMem> = read_input();
+    // play_interactive(&input[0]);
     play_game(&input[0]);
 }

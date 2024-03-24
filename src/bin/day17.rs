@@ -3,7 +3,7 @@ use ya_advent_lib::coords::{CDir, Coord2D};
 use ya_advent_lib::grid::Grid;
 use ya_advent_lib::read::read_input;
 extern crate advent2019;
-use advent2019::intcode::{IntcodeVM, ProgMem, RunErr};
+use advent2019::intcode::{IntcodeVM, ProgMem};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 enum Cell {
@@ -46,7 +46,7 @@ fn part1(input: &ProgMem) -> i64 {
         .sum()
 }
 
-fn part2(input: &ProgMem) -> i64 {
+fn part2(_input: &ProgMem) -> i64 {
     0
 }
 

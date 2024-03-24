@@ -80,16 +80,3 @@ fn main() {
     println!("Part 1: {}", part1(&input));
     println!("Part 2: {}", part2(&input));
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use ya_advent_lib::read::test_input;
-
-    #[test]
-    fn dayNN_test() {
-        let input: Vec<Action> = test_input(include_str!("dayNN.testinput"));
-        assert_eq!(part1(&input), 0);
-        assert_eq!(part2(&input), 0);
-    }
-}

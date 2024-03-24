@@ -86,7 +86,7 @@ fn explore(droid: &mut Droid) -> InfiniteGrid<Cell> {
 }
 
 fn part1(input: &ProgMem) -> (usize, InfiniteGrid<Cell>) {
-    let mut droid = Droid::with_mem(&input);
+    let mut droid = Droid::with_mem(input);
     let grid = explore(&mut droid);
     let steps = grid.iter().find_map(|(_, cell)| match cell {
         Cell::Goal(n) => Some(*n),

@@ -117,14 +117,14 @@ fn traverse(input: &[String], part2: bool) -> usize {
 
     dijkstra(
         start,
-        |loc| loc == target,
+        |loc| *loc == target,
         |(loc, depth)| {
             let mut v = loc.neighbors4().into_iter()
                 .filter(|c| matches!(map.grid.get_c(*c), Cell::Open | Cell::OuterPortal(_) | Cell::InnerPortal(_)))
-                .map(|c| ((c, depth), 1))
+                .map(|c| ((c, *depth), 1))
                 .collect::<Vec<_>>();
-            match map.grid.get_c(loc) {
-                Cell::OuterPortal(_) if part2 && depth == 0 => {},
+            match map.grid.get_c(*loc) {
+                Cell::OuterPortal(_) if part2 && *depth == 0 => {},
                 Cell::OuterPortal(label) => {
                     if let Some(p) = map.inners.get(&label) {
                         if part2 {
