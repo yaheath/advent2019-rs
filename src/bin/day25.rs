@@ -108,7 +108,7 @@ fn play_game(program: &ProgMem) {
                 }
             }
             else if line.starts_with("Doors here lead") {
-                while let Some(dir) = line_iter.next() {
+                for dir in line_iter.by_ref() {
                     match dir {
                         "- north" => {exits.insert(CDir::N);},
                         "- east" => {exits.insert(CDir::E);},
@@ -119,7 +119,7 @@ fn play_game(program: &ProgMem) {
                 }
             }
             else if line.starts_with("Items here") {
-                while let Some(item) = line_iter.next() {
+                for item in line_iter.by_ref() {
                     if !item.starts_with("- ") { break; }
                     let item = item[2..].to_string();
                     if !bad_items.contains(&item) {
@@ -148,7 +148,7 @@ fn play_game(program: &ProgMem) {
         for exit in exits {
             rooms.entry(current_room.clone())
                 .and_modify(|e| {
-                    e.exits.entry(exit).or_insert(String::new());
+                    e.exits.entry(exit).or_default();
                 });
         }
 
@@ -165,13 +165,13 @@ fn play_game(program: &ProgMem) {
                             dir_to_test = current_path.pop().unwrap();
                         }
                     }
-                    if current_room_items.len() > 0 {
+                    if !current_room_items.is_empty() {
                         state = State::Picking;
                         continue;
                     }
                     let room = &rooms[&current_room];
                     if let Some(nextdir) = room.exits.iter()
-                        .find(|(_,v)| *v == "").map(|(k,_)| k) {
+                        .find(|(_,v)| v.is_empty()).map(|(k,_)| k) {
                             current_path.push(*nextdir);
                             prev_room = current_room;
                             current_room = String::new();
@@ -179,21 +179,19 @@ fn play_game(program: &ProgMem) {
                             vm.ascii_input(dir_cmd(*nextdir));
                             if V { print!("{}", dir_cmd(*nextdir)); }
                     }
+                    else if let Some(nextdir) = current_path.last().copied() {
+                        current_path.pop();
+                        prev_room = current_room;
+                        current_room = String::new();
+                        state = State::Backtrack;
+                        vm.ascii_input(dir_cmd(-nextdir));
+                        if V { print!("{}", dir_cmd(-nextdir)); }
+                    }
                     else {
-                        if let Some(nextdir) = current_path.last().copied() {
-                            current_path.pop();
-                            prev_room = current_room;
-                            current_room = String::new();
-                            state = State::Backtrack;
-                            vm.ascii_input(dir_cmd(-nextdir));
-                            if V { print!("{}", dir_cmd(-nextdir)); }
-                        }
-                        else {
-                            prev_room = String::new();
-                            state = State::MoveToCheckpoint;
-                            if V { println!("*** Finished exploring, moving to Security Checkpoint ***"); }
-                            continue;
-                        }
+                        prev_room = String::new();
+                        state = State::MoveToCheckpoint;
+                        if V { println!("*** Finished exploring, moving to Security Checkpoint ***"); }
+                        continue;
                     }
                     break;
                 },
@@ -262,7 +260,7 @@ fn dir_cmd(dir: CDir) -> &'static str {
 
 #[allow(dead_code)]
 fn play_interactive(input: &ProgMem) -> i64 {
-    let mut vm = IntcodeVM::with_mem(&input);
+    let mut vm = IntcodeVM::with_mem(input);
     let mut out = 0;
     vm.run_interactive(&mut |v| {out = v;}).unwrap();
     out

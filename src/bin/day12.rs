@@ -77,8 +77,8 @@ fn simulate(moons: &mut [Moon], steps: usize) {
             });
         moons.iter_mut().enumerate()
             .for_each(|(idx, m)| {
-                (*m).vel += dv[idx];
-                (*m).pos += (*m).vel;
+                m.vel += dv[idx];
+                m.pos += m.vel;
             });
     }
 }

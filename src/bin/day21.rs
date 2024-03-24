@@ -4,7 +4,7 @@ extern crate advent2019;
 use advent2019::intcode::{IntcodeVM, ProgMem};
 
 fn part1(input: &ProgMem) -> i64 {
-    let mut vm = IntcodeVM::with_mem(&input);
+    let mut vm = IntcodeVM::with_mem(input);
 
 // if any of A B or C are 0 and D is 1, then jump
 "NOT A T
@@ -23,7 +23,7 @@ WALK
 }
 
 fn part2(input: &ProgMem) -> i64 {
-    let mut vm = IntcodeVM::with_mem(&input);
+    let mut vm = IntcodeVM::with_mem(input);
 "OR B J
 AND C J
 NOT J J

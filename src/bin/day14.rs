@@ -119,24 +119,22 @@ fn part2(input: &[Reaction]) -> usize {
                 }
             }
         }
+        else if upperbound == 0 {
+            upperbound = est;
+            est = if lowerbound > 0 {
+                lowerbound + (upperbound - lowerbound) / 2
+            } else {
+                est - interval
+            };
+        }
+        else if lowerbound == 0 {
+            est -= interval;
+        }
         else {
-            if upperbound == 0 {
-                upperbound = est;
-                est = if lowerbound > 0 {
-                    lowerbound + (upperbound - lowerbound) / 2
-                } else {
-                    est - interval
-                };
-            }
-            else if lowerbound == 0 {
-                est -= interval;
-            }
-            else {
-                upperbound = est;
-                est = lowerbound + (upperbound - lowerbound) / 2;
-                if est == lowerbound {
-                    return est;
-                }
+            upperbound = est;
+            est = lowerbound + (upperbound - lowerbound) / 2;
+            if est == lowerbound {
+                return est;
             }
         }
     }

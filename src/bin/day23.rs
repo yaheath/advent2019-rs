@@ -12,7 +12,7 @@ fn run(input: &ProgMem, part2: bool) -> i64 {
     let mut last_nat_y: Option<i64> = None;
 
     for n in 0..50 {
-        let mut vm = IntcodeVM::with_mem(&input);
+        let mut vm = IntcodeVM::with_mem(input);
         vm.input_queue.push_back(n);
         nodes.push(vm);
         input_queue.push(VecDeque::new());
@@ -30,7 +30,7 @@ fn run(input: &ProgMem, part2: bool) -> i64 {
                 }
             }
             match node.run_with_cb(&mut || None, &mut |val| {
-                output_queue.get_mut(idx).map(|q| q.push_back(val));
+                if let Some(q) = output_queue.get_mut(idx) { q.push_back(val) }
             }) {
                 Ok(_) => { panic!("program exited"); },
                 Err(RunErr::InputNeeded) => {},

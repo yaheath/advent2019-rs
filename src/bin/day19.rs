@@ -5,7 +5,7 @@ extern crate advent2019;
 use advent2019::intcode::{IntcodeVM, ProgMem};
 
 fn test_loc(input: &ProgMem, x: i64, y: i64) -> i64 {
-    let mut vm = IntcodeVM::with_mem(&input);
+    let mut vm = IntcodeVM::with_mem(input);
     vm.input_queue.push_back(x);
     vm.input_queue.push_back(y);
     let mut out = -1;

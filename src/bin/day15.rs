@@ -17,7 +17,7 @@ struct Droid {
 }
 impl Droid {
     fn with_mem(mem: &ProgMem) -> Self {
-        let vm = IntcodeVM::with_mem(&mem);
+        let vm = IntcodeVM::with_mem(mem);
         Self { vm }
     }
     fn step(&mut self, dir: CDir) -> MoveResult {

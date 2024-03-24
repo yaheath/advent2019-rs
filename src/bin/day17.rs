@@ -27,7 +27,7 @@ impl From<char> for Cell {
 }
 
 fn part1(input: &ProgMem) -> i64 {
-    let mut vm = IntcodeVM::with_mem(&input);
+    let mut vm = IntcodeVM::with_mem(input);
     let mut outp = String::new();
     vm.run_with_cb(&mut || None, &mut |v| outp.push(v as u8 as char)).unwrap();
     //println!("{outp}");

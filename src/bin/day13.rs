@@ -4,14 +4,14 @@ extern crate advent2019;
 use advent2019::intcode::{IntcodeVM, ProgMem, RunErr};
 
 fn part1(input: &ProgMem) -> usize {
-    let mut vm = IntcodeVM::with_mem(&input);
+    let mut vm = IntcodeVM::with_mem(input);
     let mut outp = Vec::new();
     vm.run_with_cb(&mut || None, &mut |v| outp.push(v)).unwrap();
     outp.chunks(3).filter(|v| v[2] == 2).count()
 }
 
 fn part2(input: &ProgMem) -> i64 {
-    let mut vm = IntcodeVM::with_mem(&input);
+    let mut vm = IntcodeVM::with_mem(input);
     let mut score = 0;
     let mut paddle_pos = 0;
     let mut ball_pos = 0;

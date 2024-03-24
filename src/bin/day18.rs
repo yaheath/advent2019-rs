@@ -159,7 +159,7 @@ fn part1(input: &[String]) -> usize {
     ).unwrap()
 }
 
-fn part2(input: &[String]) -> i64 {
+fn part2(_input: &[String]) -> i64 {
     0
 }
 
